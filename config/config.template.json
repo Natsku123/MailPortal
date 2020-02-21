@@ -1,0 +1,9 @@
+{
+  "database": {
+    "user": "DATABASE USERNAME",
+    "password": "DATABASE PASSWORD",
+    "host": "127.0.0.1",
+    "database": "DATABASE NAME"
+  },
+  "secret": "GENERATE RANDOM SECRET HERE"
+}
