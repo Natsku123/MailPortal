@@ -16,7 +16,10 @@ from modules.database import (
     delete_alias,
     get_alias,
     get_aliases,
-    update_alias
+    update_alias,
+    create_domain,
+    get_domain,
+    get_domains
 )
 
 config = get_config()
@@ -159,6 +162,28 @@ def remove_alias(source):
         return jsonify(delete_alias(alias_obj[0]['id'])), 200
     else:
         return jsonify({"status": "alias doesn't exist"}), 404
+
+
+@app.route('/domains', methods=['GET'])
+@jwt_required
+def domains():
+    return jsonify(get_domains()), 200
+
+
+@app.route('/domains/<string:name>', methods=['GET'])
+@jwt_required
+def domain(name):
+    return jsonify(get_domain(name)), 200
+
+
+@app.route('/domains/create', methods=['POST'])
+@jwt_required
+def add_domain():
+    if not request.is_json:
+        return jsonify({"status": "Missing JSON in request."}), 400
+    if 'name' not in request.json:
+        return jsonify({"status": "Missing parameters!"}), 400
+    return jsonify(create_domain(request.json['name'])), 200
 
 
 if __name__ == '__main__':

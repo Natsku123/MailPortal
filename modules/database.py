@@ -65,7 +65,7 @@ def create_domain(cnx, domain):
     add_domain = ("INSERT INTO `virtual_domains` (`name`) VALUES ('%s');")
 
     try:
-        cursor.execute(add_domain, domain)
+        cursor.execute(add_domain, (domain,))
         cnx.commit()
         domain_id = cursor.lastrowid
         return_value = {"status": "success", "domain_id": domain_id}
@@ -347,6 +347,53 @@ def get_alias(cnx, source=None, destination=None):
         return_value = {'status': "success", "aliases": []}
         for row in cursor:
             return_value['aliases'].append(row)
+    except Error as err:
+        return_value = {"status": "Error: " + str(err)}
+    finally:
+        cursor.close()
+
+    return return_value
+
+
+@db
+def get_domains(cnx):
+    """
+    Get all domains from virtual_domains table.
+    :param cnx: database connection from 'db' wrapper
+    :return: list of domains
+    """
+    cursor = cnx.cursor(dictionary=True)
+
+    domain_query = ("SELECT id, name FROM `virtual_domains`;")
+
+    try:
+        cursor.execute(domain_query)
+        return_value = {"status": "success", "domains": []}
+        for row in cursor:
+            return_value['domains'].append(row)
+    except Error as err:
+        return_value = {"status": "Error: " + str(err)}
+    finally:
+        cursor.close()
+
+    return return_value
+
+
+@db
+def get_domain(cnx, name):
+    """
+    Get one domain from virtual_domains table.
+    :param cnx: database connection from 'db' wrapper
+    :param name: name of domain
+    :return: list of domains
+    """
+    cursor = cnx.cursor(dictionary=True)
+
+    domain_query = ("SELECT id, name FROM `virtual_domains` WHERE `name`='%s' LIMIT 1;")
+
+    try:
+        cursor.execute(domain_query, (name,))
+        return_value = {"status": "success", "domain": cursor[0]}
     except Error as err:
         return_value = {"status": "Error: " + str(err)}
     finally:
