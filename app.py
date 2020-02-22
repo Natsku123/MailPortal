@@ -5,7 +5,14 @@ from flask_jwt_extended import (
 )
 
 from modules.utils import get_config
-from modules.database import handle_login
+from modules.database import (
+    handle_login,
+    get_users,
+    get_user,
+    update_user,
+    delete_user,
+    create_user
+)
 
 config = get_config()
 
@@ -35,7 +42,60 @@ def login():
 
 @app.route('/')
 def root():
+    # TODO add documentation
     return '# TODO add documentation'
+
+
+@app.route('/users', methods=['GET'])
+@jwt_required
+def users():
+    return jsonify(get_users())
+
+
+@app.route('/users/add', methods=['POST'])
+@jwt_required
+def add_user():
+    if not request.is_json:
+        return jsonify({"status": "Missing JSON in request."}), 400
+    if 'email' not in request.json or 'password' not in request.json or 'domain_id' not in request.json:
+        return jsonify({"status": "Missing parameters!"}), 400
+    return jsonify(create_user((request.json['email'], request.json['password'], request.json['domain_id'])))
+
+
+@app.route('/users/<string:email>', methods=['GET'])
+@jwt_required
+def user(email):
+    return jsonify(get_user(email))
+
+
+@app.route('/users/<string:email>/edit', methods=['POST'])
+@jwt_required
+def edit_user(email):
+    if not request.is_json:
+        return jsonify({"status": "Missing JSON in request."}), 400
+
+    user_obj = get_user(email).get("user", None)
+    if not user:
+        return jsonify({"status": "User not found."}), 404
+
+    if 'email' in request.json and 'password' in request.json:
+        return jsonify(update_user(user_obj['id'], email=request.json['email'], password=request.json['password']))
+    elif 'email' in request.json:
+        return jsonify(update_user(user_obj['id'], email=request.json['email']))
+    elif 'password' in request.json:
+        return jsonify(update_user(user_obj['id'], password=request.json['password']))
+    else:
+        return jsonify({'status': "no changes"})
+
+
+@app.route('/users/<string:email>/remove', methods=['POST'])
+@jwt_required
+def remove_user(email):
+    user_obj = get_user(email).get("user", None)
+    if user_obj:
+        return jsonify(delete_user(user_obj['id']))
+    else:
+        return jsonify({"status": "user doesn't exist"}), 404
 
 
 if __name__ == '__main__':

@@ -249,3 +249,49 @@ def handle_login(cnx, username, password):
 
     return return_value
 
+
+@db
+def get_users(cnx):
+    """
+    Get all users from virtual_users table.
+    :param cnx: database connection from 'db' wrapper
+    :return: list of users
+    """
+    cursor = cnx.cursor(dictionary=True)
+
+    users_query = ("SELECT id, email FROM `virtual_users`;")
+
+    try:
+        cursor.execute(users_query)
+        return_value = {'status': "success", "users": []}
+        for row in cursor:
+            return_value['users'].append(row)
+    except Error as err:
+        return_value = {"status": "Error: " + str(err)}
+    finally:
+        cursor.close()
+
+    return return_value
+
+
+@db
+def get_user(cnx, email):
+    """
+    Get one user from virtual_users table.
+    :param cnx: database connection from 'db' wrapper
+    :param email: email of user
+    :return: user
+    """
+    cursor = cnx.cursor(dictionary=True)
+
+    user_query = ("SELECT id, email FROM `virtual_users` WHERE `email`='%s' LIMIT 1;")
+
+    try:
+        cursor.execute(user_query, (email,))
+        return_value = {'status': "success", "user": cursor[0]}
+    except Error as err:
+        return_value = {"status": "Error: " + str(err)}
+    finally:
+        cursor.close()
+
+    return return_value
