@@ -221,3 +221,31 @@ def delete_alias(cnx, alias_id):
 
     return return_value
 
+
+@db
+def handle_login(cnx, username, password):
+    """
+    Check if user exists in virtual_users table.
+    :param cnx: database connection from 'db' wrapper
+    :param username: username of user
+    :param password: password of user
+    :return: True or False (if exists or not)
+    """
+    cursor = cnx.cursor(dictionary=True)
+
+    login_query = ("SELECT * FROM `virtual_users` WHERE `email`='%s' AND `password`=ENCRYPT('%s', `password`) LIMIT 1;")
+    login_data = (username, password)
+
+    try:
+        cursor.execute(login_query, login_data)
+        if cursor.rowcount == 1:
+            return_value = True
+        else:
+            return_value = False
+    except Error as err:
+        return_value = False
+    finally:
+        cursor.close()
+
+    return return_value
+
