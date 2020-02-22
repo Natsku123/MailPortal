@@ -11,7 +11,12 @@ from modules.database import (
     get_user,
     update_user,
     delete_user,
-    create_user
+    create_user,
+    create_alias,
+    delete_alias,
+    get_alias,
+    get_aliases,
+    update_alias
 )
 
 config = get_config()
@@ -43,13 +48,13 @@ def login():
 @app.route('/')
 def root():
     # TODO add documentation
-    return '# TODO add documentation'
+    return '# TODO add documentation', 200
 
 
 @app.route('/users', methods=['GET'])
 @jwt_required
 def users():
-    return jsonify(get_users())
+    return jsonify(get_users()), 200
 
 
 @app.route('/users/add', methods=['POST'])
@@ -59,13 +64,13 @@ def add_user():
         return jsonify({"status": "Missing JSON in request."}), 400
     if 'email' not in request.json or 'password' not in request.json or 'domain_id' not in request.json:
         return jsonify({"status": "Missing parameters!"}), 400
-    return jsonify(create_user((request.json['email'], request.json['password'], request.json['domain_id'])))
+    return jsonify(create_user((request.json['email'], request.json['password'], request.json['domain_id']))), 200
 
 
 @app.route('/users/<string:email>', methods=['GET'])
 @jwt_required
 def user(email):
-    return jsonify(get_user(email))
+    return jsonify(get_user(email)), 200
 
 
 @app.route('/users/<string:email>/edit', methods=['POST'])
@@ -79,13 +84,13 @@ def edit_user(email):
         return jsonify({"status": "User not found."}), 404
 
     if 'email' in request.json and 'password' in request.json:
-        return jsonify(update_user(user_obj['id'], email=request.json['email'], password=request.json['password']))
+        return jsonify(update_user(user_obj['id'], email=request.json['email'], password=request.json['password'])), 200
     elif 'email' in request.json:
-        return jsonify(update_user(user_obj['id'], email=request.json['email']))
+        return jsonify(update_user(user_obj['id'], email=request.json['email'])), 200
     elif 'password' in request.json:
-        return jsonify(update_user(user_obj['id'], password=request.json['password']))
+        return jsonify(update_user(user_obj['id'], password=request.json['password'])), 200
     else:
-        return jsonify({'status': "no changes"})
+        return jsonify({'status': "no changes"}), 200
 
 
 @app.route('/users/<string:email>/remove', methods=['POST'])
@@ -93,9 +98,67 @@ def edit_user(email):
 def remove_user(email):
     user_obj = get_user(email).get("user", None)
     if user_obj:
-        return jsonify(delete_user(user_obj['id']))
+        return jsonify(delete_user(user_obj['id'])), 200
     else:
         return jsonify({"status": "user doesn't exist"}), 404
+
+
+@app.route('/aliases', methods=['GET'])
+@jwt_required
+def aliases():
+    return jsonify(get_aliases()), 200
+
+
+@app.route('/aliases/add', methods=['POST'])
+@jwt_required
+def add_alias():
+    if not request.is_json:
+        return jsonify({"status": "Missing JSON in request."}), 400
+    if 'source' not in request.json or 'destination' not in request.json or 'domain_id' not in request.json:
+        return jsonify({"status": "Missing parameters!"}), 400
+    return jsonify(create_alias((request.json['domain_id'], request.json['source'], request.json['destination']))), 200
+
+
+@app.route('/aliases/user/<string:destination>', methods=['GET'])
+@jwt_required
+def user_alias(destination):
+    return jsonify(get_alias(destination=destination)), 200
+
+
+@app.route('/aliases/<string:source>', methods=['GET'])
+@jwt_required
+def alias(source):
+    return jsonify(get_alias(source=source)), 200
+
+
+@app.route('/aliases/<string:source>/edit', methods=['POST'])
+@jwt_required
+def edit_alias(source):
+    if not request.is_json:
+        return jsonify({"status": "Missing JSON in request."}), 400
+
+    alias_obj = get_alias(source).get("aliases", None)
+    if not alias_obj:
+        return jsonify({"status": "Alias not found."}), 404
+
+    if 'source' in request.json and 'destination' in request.json:
+        return jsonify(update_alias(alias_obj[0]['id'], source=request.json['source'], destination=request.json['destination'])), 200
+    elif 'source' in request.json:
+        return jsonify(update_alias(alias_obj[0]['id'], source=request.json['source'])), 200
+    elif 'destination' in request.json:
+        return jsonify(update_alias(alias_obj[0]['id'], destination=request.json['destination'])), 200
+    else:
+        return jsonify({'status': "no changes"}), 200
+
+
+@app.route('/aliases/<string:source>/remove', methods=['POST'])
+@jwt_required
+def remove_alias(source):
+    alias_obj = get_alias(source).get("aliases", None)
+    if alias_obj:
+        return jsonify(delete_alias(alias_obj[0]['id'])), 200
+    else:
+        return jsonify({"status": "alias doesn't exist"}), 404
 
 
 if __name__ == '__main__':

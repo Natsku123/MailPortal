@@ -295,3 +295,61 @@ def get_user(cnx, email):
         cursor.close()
 
     return return_value
+
+
+@db
+def get_aliases(cnx):
+    """
+    Get all aliases from virtual_aliases table.
+    :param cnx: database connection from 'db' wrapper
+    :return: list of aliases
+    """
+    cursor = cnx.cursor(dictionary=True)
+
+    aliases_query = ("SELECT id, source, destination FROM `virtual_aliases`;")
+
+    try:
+        cursor.execute(aliases_query)
+        return_value = {'status': "success", "aliases": []}
+        for row in cursor:
+            return_value['aliases'].append(row)
+    except Error as err:
+        return_value = {"status": "Error: " + str(err)}
+    finally:
+        cursor.close()
+
+    return return_value
+
+
+@db
+def get_alias(cnx, source=None, destination=None):
+    """
+    Get one alias from virtual_aliases table.
+    :param cnx: database connection from 'db' wrapper
+    :param source: email of alias
+    :param destination: email of destination
+    :return: alias
+    """
+    cursor = cnx.cursor(dictionary=True)
+
+    if source:
+        alias_query = ("SELECT id, source, destination FROM `virtual_aliases` WHERE `source`='%s' LIMIT 1;")
+        email = source
+    elif destination:
+        alias_query = ("SELECT id, source, destination FROM `virtual_aliases` WHERE `destination`='%s';")
+        email = destination
+    else:
+        cursor.close()
+        return {"status": "Source or destination needed."}
+
+    try:
+        cursor.execute(alias_query, (email,))
+        return_value = {'status': "success", "aliases": []}
+        for row in cursor:
+            return_value['aliases'].append(row)
+    except Error as err:
+        return_value = {"status": "Error: " + str(err)}
+    finally:
+        cursor.close()
+
+    return return_value
